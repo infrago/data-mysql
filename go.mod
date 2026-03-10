@@ -8,7 +8,6 @@ require (
 	github.com/infrago/infra v0.12.0
 )
 
-replace github.com/infrago/data => ../data
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
