@@ -2,12 +2,14 @@ package data_mysql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
 
+	mysql "github.com/go-sql-driver/mysql"
+	. "github.com/infrago/base"
 	"github.com/infrago/data"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 type (
@@ -78,3 +80,54 @@ func (mysqlDialect) Quote(s string) string {
 func (mysqlDialect) Placeholder(_ int) string { return "?" }
 func (mysqlDialect) SupportsILike() bool      { return false }
 func (mysqlDialect) SupportsReturning() bool  { return false }
+func (mysqlDialect) MaxParams() int           { return 65535 }
+func (mysqlDialect) ClassifyError(err error) error {
+	var myerr *mysql.MySQLError
+	if !errors.As(err, &myerr) {
+		return nil
+	}
+	switch myerr.Number {
+	case 1062:
+		return data.ErrDuplicate
+	case 1451, 1452:
+		return data.ErrForeignKey
+	case 1205:
+		return data.ErrTimeout
+	case 1213:
+		return data.ErrConflict
+	case 1317:
+		return data.ErrCanceled
+	case 2006, 2013:
+		return data.ErrDriver
+	default:
+		return nil
+	}
+}
+func (mysqlDialect) BindValue(cfg Var, v any) (any, bool) {
+	switch {
+	case data.IsJSONVar(cfg):
+		return data.BindJSONValue(v)
+	case data.IsBinaryVar(cfg):
+		return data.BindBinaryValue(v)
+	case data.IsUUIDVar(cfg), data.IsDecimalVar(cfg):
+		return data.BindTextValue(v)
+	case data.IsTimeVar(cfg):
+		return data.BindTimeValue(v)
+	default:
+		return nil, false
+	}
+}
+func (mysqlDialect) DecodeValue(cfg Var, value any) (any, bool) {
+	switch {
+	case data.IsJSONVar(cfg):
+		return data.DecodeJSONValue(value)
+	case data.IsBinaryVar(cfg):
+		return data.DecodeBinaryValue(value)
+	case data.IsUUIDVar(cfg), data.IsDecimalVar(cfg):
+		return data.DecodeTextValue(value)
+	case data.IsTimeVar(cfg):
+		return data.DecodeTimeValue(value)
+	default:
+		return nil, false
+	}
+}
