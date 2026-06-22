@@ -4,9 +4,9 @@ go 1.25.3
 
 require (
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/infrago/base v0.28.0
-	github.com/infrago/data v0.28.0
-	github.com/infrago/infra v0.28.0
+	github.com/infrago/base v0.29.0
+	github.com/infrago/data v0.29.0
+	github.com/infrago/infra v0.29.0
 )
 
 require (
